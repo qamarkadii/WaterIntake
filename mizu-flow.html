@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mizu Flow</title>
+    <style>
+        :root {
+            --bg-top: #e9f7ff;
+            --bg-bottom: #b1d7f2;
+            --panel: rgba(255, 255, 255, 0.72);
+            --panel-strong: rgba(245, 252, 255, 0.88);
+            --line: rgba(84, 133, 176, 0.18);
+            --ink: #17324b;
+            --muted: #5a7892;
+            --blue-deep: #2f6ea2;
+            --blue-mid: #5a9fd0;
+            --blue-soft: #8ed1ef;
+            --shadow: 0 24px 70px rgba(45, 86, 125, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Yu Mincho", "Hiragino Mincho ProN", Georgia, serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 30%),
+                linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after,
+        .backdrop::before,
+        .backdrop::after {
+            content: "";
+            position: fixed;
+            border-radius: 999px;
+            pointer-events: none;
+            opacity: 0.55;
+        }
+
+        body::before {
+            inset: auto auto 8% 5%;
+            width: 200px;
+            height: 200px;
+            background:
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 22%, transparent 23%),
+                radial-gradient(circle at 18% 50%, rgba(177, 224, 246, 0.95) 0 18%, transparent 19%),
+                radial-gradient(circle at 82% 50%, rgba(177, 224, 246, 0.95) 0 18%, transparent 19%),
+                radial-gradient(circle at 50% 18%, rgba(177, 224, 246, 0.95) 0 18%, transparent 19%),
+                radial-gradient(circle at 50% 82%, rgba(177, 224, 246, 0.95) 0 18%, transparent 19%);
+            filter: blur(1px);
+        }
+
+        body::after {
+            inset: 12% 8% auto auto;
+            width: 170px;
+            height: 170px;
+            background:
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.86) 0 20%, transparent 21%),
+                radial-gradient(circle at 20% 45%, rgba(129, 188, 227, 0.9) 0 19%, transparent 20%),
+                radial-gradient(circle at 80% 45%, rgba(129, 188, 227, 0.9) 0 19%, transparent 20%),
+                radial-gradient(circle at 33% 79%, rgba(129, 188, 227, 0.9) 0 19%, transparent 20%),
+                radial-gradient(circle at 67% 79%, rgba(129, 188, 227, 0.9) 0 19%, transparent 20%);
+        }
+
+        .backdrop::before {
+            top: 32%;
+            left: -60px;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.32), transparent 70%);
+        }
+
+        .backdrop::after {
+            right: -90px;
+            bottom: 18%;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.26), transparent 70%);
+        }
+
+        .page-shell {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 40px 0 56px;
+        }
+
+        .hero-card,
+        .panel {
+            position: relative;
+            background: var(--panel);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-card {
+            display: grid;
+            grid-template-columns: 1.45fr 0.9fr;
+            gap: 28px;
+            padding: 34px;
+            border-radius: 36px;
+            overflow: hidden;
+        }
+
+        .hero-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(115deg, transparent 0 44%, rgba(255, 255, 255, 0.2) 44% 48%, transparent 48%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent 30%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.72rem;
+            color: var(--blue-deep);
+        }
+
+        h1, h2, p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 4.8rem);
+            line-height: 0.95;
+            margin-bottom: 14px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+
+        .subtitle,
+        .stat-note,
+        .panel-header p,
+        label,
+        .entry-item span:last-child,
+        .history-item span {
+            color: var(--muted);
+        }
+
+        .hero-stats {
+            padding: 26px;
+            border-radius: 28px;
+            background: linear-gradient(180deg, rgba(245, 252, 255, 0.92), rgba(223, 242, 252, 0.72));
+            display: grid;
+            justify-items: center;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .stat-kicker {
+            font-size: 0.85rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--blue-deep);
+        }
+
+        .stat-value {
+            font-size: clamp(2.4rem, 4vw, 3.8rem);
+            font-weight: 700;
+        }
+
+        .stat-value span {
+            font-size: 1rem;
+            color: var(--muted);
+        }
+
+        .progress-ring {
+            width: 168px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background:
+                radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 53%, transparent 54%),
+                conic-gradient(from 180deg, var(--blue-deep), var(--blue-soft), #dff4ff, var(--blue-deep));
+            box-shadow: inset 0 0 0 12px rgba(255, 255, 255, 0.24);
+        }
+
+        .progress-ring__inner {
+            display: grid;
+            place-items: center;
+            width: 108px;
+            height: 108px;
+            border-radius: 50%;
+            background: rgba(248, 253, 255, 0.92);
+        }
+
+        .progress-ring strong {
+            font-size: 1.8rem;
+        }
+
+        .grid {
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        .panel {
+            border-radius: 28px;
+            padding: 26px;
+        }
+
+        .panel-primary {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(230, 246, 255, 0.78));
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .meter {
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(126, 177, 211, 0.2);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--blue-deep), var(--blue-mid), var(--blue-soft));
+            width: 0;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin: 0;
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 18px;
+            padding: 14px 16px;
+            font: inherit;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .quick-button,
+        .primary-button {
+            background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+            color: white;
+            box-shadow: 0 14px 28px rgba(60, 111, 154, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        .custom-form,
+        .stack-form {
+            display: grid;
+            gap: 10px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 13px 14px;
+            font: inherit;
+            color: var(--ink);
+            background: var(--panel-strong);
+        }
+
+        .ghost-button {
+            margin-top: 18px;
+            background: rgba(255, 255, 255, 0.65);
+            color: var(--blue-deep);
+            border: 1px solid rgba(68, 118, 160, 0.18);
+        }
+
+        .entry-list,
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 12px;
+        }
+
+        .entry-item,
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(249, 253, 255, 0.74);
+            border: 1px solid rgba(89, 142, 185, 0.12);
+        }
+
+        .entry-empty,
+        .history-empty {
+            font-style: italic;
+        }
+
+        .history-item strong,
+        .entry-item span:first-child {
+            font-size: 1.02rem;
+        }
+
+        @media (max-width: 860px) {
+            .hero-card,
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-card {
+                padding: 24px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .page-shell {
+                width: min(100% - 20px, 1120px);
+                padding-top: 18px;
+                padding-bottom: 28px;
+            }
+
+            .panel,
+            .hero-card,
+            .hero-stats {
+                border-radius: 24px;
+            }
+
+            .quick-grid,
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="backdrop"></div>
+    <main class="page-shell">
+        <section class="hero-card">
+            <div class="hero-copy">
+                <p class="eyebrow">Suibun Hokyu | Water Ritual</p>
+                <h1>Mizu Flow</h1>
+                <p class="subtitle">A blue floral water tracker with a calm Japanese-inspired atmosphere.</p>
+            </div>
+            <div class="hero-stats">
+                <p class="stat-kicker">Today</p>
+                <div class="stat-value"><span id="total-ml">0</span> <span>ml</span></div>
+                <p class="stat-note"><span id="remaining-ml">2000</span> ml left to reach <span id="goal-inline">2000</span> ml</p>
+                <div class="progress-ring">
+                    <div class="progress-ring__inner">
+                        <strong id="percent-label">0%</strong>
+                        <span>of goal</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="panel panel-primary">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Kyo no Kiroku</p>
+                        <h2>Track Your Intake</h2>
+                    </div>
+                    <p id="today-label"></p>
+                </div>
+
+                <div class="meter">
+                    <div class="meter-fill" id="meter-fill"></div>
+                </div>
+
+                <div class="quick-grid">
+                    <button class="quick-button" data-amount="150" type="button">+150 ml</button>
+                    <button class="quick-button" data-amount="250" type="button">+250 ml</button>
+                    <button class="quick-button" data-amount="350" type="button">+350 ml</button>
+                    <button class="quick-button" data-amount="500" type="button">+500 ml</button>
+                </div>
+
+                <form class="custom-form" id="add-form">
+                    <label for="amount_ml">Custom amount</label>
+                    <div class="input-row">
+                        <input id="amount_ml" name="amount_ml" type="number" min="1" step="10" placeholder="Enter ml" required>
+                        <button class="primary-button" type="submit">Add Water</button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Mokuhyo</p>
+                        <h2>Daily Goal</h2>
+                    </div>
+                </div>
+
+                <form class="stack-form" id="goal-form">
+                    <label for="goal_ml">Goal in milliliters</label>
+                    <input id="goal_ml" name="goal_ml" type="number" min="250" step="50" value="2000" required>
+                    <button class="primary-button" type="submit">Update Goal</button>
+                </form>
+
+                <button class="ghost-button" id="reset-button" type="button">Reset Today</button>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Shizuku</p>
+                        <h2>Recent Sips</h2>
+                    </div>
+                </div>
+                <ul class="entry-list" id="entry-list"></ul>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Rireki</p>
+                        <h2>7-Day History</h2>
+                    </div>
+                </div>
+                <ul class="history-list" id="history-list"></ul>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        (() => {
+            const STORAGE_KEY = "mizu-flow-data-v1";
+            const DEFAULT_GOAL = 2000;
+
+            const today = new Date();
+            const todayKey = today.toISOString().slice(0, 10);
+            const todayLabel = document.getElementById("today-label");
+            const totalMl = document.getElementById("total-ml");
+            const remainingMl = document.getElementById("remaining-ml");
+            const goalInline = document.getElementById("goal-inline");
+            const goalInput = document.getElementById("goal_ml");
+            const percentLabel = document.getElementById("percent-label");
+            const meterFill = document.getElementById("meter-fill");
+            const entryList = document.getElementById("entry-list");
+            const historyList = document.getElementById("history-list");
+
+            function loadState() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { days: {} };
+                } catch {
+                    return { days: {} };
+                }
+            }
+
+            function saveState(state) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            }
+
+            function getTodayData(state) {
+                if (!state.days[todayKey]) {
+                    state.days[todayKey] = { goal: DEFAULT_GOAL, entries: [] };
+                }
+                return state.days[todayKey];
+            }
+
+            function formatTime(iso) {
+                return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            }
+
+            function render() {
+                const state = loadState();
+                const current = getTodayData(state);
+                saveState(state);
+
+                const total = current.entries.reduce((sum, entry) => sum + entry.amount, 0);
+                const goal = current.goal;
+                const remaining = Math.max(goal - total, 0);
+                const percent = goal ? Math.min(100, Math.round((total / goal) * 100)) : 0;
+
+                todayLabel.textContent = todayKey;
+                totalMl.textContent = total;
+                remainingMl.textContent = remaining;
+                goalInline.textContent = goal;
+                goalInput.value = goal;
+                percentLabel.textContent = percent + "%";
+                meterFill.style.width = percent + "%";
+
+                entryList.innerHTML = "";
+                if (!current.entries.length) {
+                    entryList.innerHTML = '<li class="entry-item entry-empty"><span>No water logged yet</span><span>Start with one sip</span></li>';
+                } else {
+                    current.entries
+                        .slice()
+                        .reverse()
+                        .forEach((entry) => {
+                            const li = document.createElement("li");
+                            li.className = "entry-item";
+                            li.innerHTML = "<span>" + entry.amount + " ml</span><span>" + formatTime(entry.createdAt) + "</span>";
+                            entryList.appendChild(li);
+                        });
+                }
+
+                historyList.innerHTML = "";
+                const history = Object.entries(state.days)
+                    .sort((a, b) => b[0].localeCompare(a[0]))
+                    .slice(0, 7);
+
+                if (!history.length) {
+                    historyList.innerHTML = '<li class="history-item history-empty"><div><strong>No history yet</strong><span>Your last 7 days will appear here.</span></div><div>--</div></li>';
+                } else {
+                    history.forEach(([day, info]) => {
+                        const totalForDay = info.entries.reduce((sum, entry) => sum + entry.amount, 0);
+                        const pct = info.goal ? Math.min(100, Math.round((totalForDay / info.goal) * 100)) : 0;
+                        const li = document.createElement("li");
+                        li.className = "history-item";
+                        li.innerHTML =
+                            "<div><strong>" + day + "</strong><span>" + totalForDay + " / " + info.goal + " ml</span></div><div>" + pct + "%</div>";
+                        historyList.appendChild(li);
+                    });
+                }
+            }
+
+            function addWater(amount) {
+                const state = loadState();
+                const current = getTodayData(state);
+                current.entries.push({
+                    amount,
+                    createdAt: new Date().toISOString()
+                });
+                saveState(state);
+                render();
+            }
+
+            document.querySelectorAll("[data-amount]").forEach((button) => {
+                button.addEventListener("click", () => addWater(Number(button.dataset.amount)));
+            });
+
+            document.getElementById("add-form").addEventListener("submit", (event) => {
+                event.preventDefault();
+                const input = document.getElementById("amount_ml");
+                const amount = Number(input.value);
+                if (amount > 0) {
+                    addWater(amount);
+                    input.value = "";
+                }
+            });
+
+            document.getElementById("goal-form").addEventListener("submit", (event) => {
+                event.preventDefault();
+                const state = loadState();
+                const current = getTodayData(state);
+                const goal = Number(goalInput.value);
+                if (goal > 0) {
+                    current.goal = goal;
+                    saveState(state);
+                    render();
+                }
+            });
+
+            document.getElementById("reset-button").addEventListener("click", () => {
+                const state = loadState();
+                const current = getTodayData(state);
+                current.entries = [];
+                saveState(state);
+                render();
+            });
+
+            render();
+        })();
+    </script>
+</body>
+</html>
